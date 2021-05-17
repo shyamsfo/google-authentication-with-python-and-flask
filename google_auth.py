@@ -1,5 +1,6 @@
 import functools
 import os
+import json
 
 import flask
 
@@ -9,13 +10,25 @@ import googleapiclient.discovery
 
 ACCESS_TOKEN_URI = 'https://www.googleapis.com/oauth2/v4/token'
 AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent'
-
-AUTHORIZATION_SCOPE ='openid email profile https://www.googleapis.com/auth/drive.file'
-
+AUTHORIZATION_SCOPE ='email profile https://www.googleapis.com/auth/userinfo.profile openid'
 AUTH_REDIRECT_URI = os.environ.get("FN_AUTH_REDIRECT_URI", default=False)
 BASE_URI = os.environ.get("FN_BASE_URI", default=False)
 CLIENT_ID = os.environ.get("FN_CLIENT_ID", default=False)
 CLIENT_SECRET = os.environ.get("FN_CLIENT_SECRET", default=False)
+#AUTHORIZATION_SCOPE = 'https://www.googleapis.com/auth/userinfo.profile'
+
+SCOPES = ['email', 'https://www.googleapis.com/auth/userinfo.profile', 'openid']
+SCOPES = [
+    'email',
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+AUTHORIZATION_SCOPE = ' '.join(SCOPES)
+#API_SERVICE_NAME = 'drive'
+API_VERSION = 'v2'
+
+
 
 AUTH_TOKEN_KEY = 'auth_token'
 AUTH_STATE_KEY = 'auth_state'
@@ -91,6 +104,13 @@ def google_auth_redirect():
                         authorization_response=flask.request.url)
 
     flask.session[AUTH_TOKEN_KEY] = oauth2_tokens
+    r = session.get('https://www.googleapis.com/oauth2/v2/userinfo')
+    print("GOOGLE USER INFO &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+    print(r.content)
+    user_info = json.loads(r.content)
+    flask.session['USER_INFO'] = user_info
+    print(user_info)
+    print("**************")
 
     return flask.redirect(BASE_URI, code=302)
 
